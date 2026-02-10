@@ -1,5 +1,4 @@
-# https://pypi.org/project/flask/
-Flask >= 2.2
-
-# https://pypi.org/project/gunicorn/
-gunicorn==20.1.0
+flask
+google-cloud-storage
+google-api-python-client
+google-auth
