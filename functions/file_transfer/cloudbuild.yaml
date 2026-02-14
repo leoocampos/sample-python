@@ -13,7 +13,7 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/function-file-transfer:$SHORT_SHA']
 
-  # Passo 3: Deploy no Cloud Run (que sustenta a Cloud Function 2nd gen)
+  # Passo 3: Deploy forçando o comando de inicialização
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
@@ -27,8 +27,10 @@ steps:
       - '--platform'
       - 'managed'
       - '--allow-unauthenticated'
-      - '--set-env-vars'
-      - 'FLASK_APP=main.py'
+      - '--command'
+      - 'gunicorn'
+      - '--args'
+      - '--bind=:8080,--workers=1,--threads=8,main:app'
 
 images:
   - 'gcr.io/$PROJECT_ID/function-file-transfer:$SHORT_SHA'
