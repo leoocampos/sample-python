@@ -73,7 +73,7 @@ def processar_arquivos():
 # =====================
 # ENDPOINT CLOUD RUN
 # =====================
-@app.post("/file-transfer")
+@app.post("/functions/file-transfer")
 def file_transfer():
     resultado = processar_arquivos()
     return jsonify(resultado), 200
