@@ -1,27 +1,27 @@
 steps:
-  # Passo 1: Adicionamos o ponto (.) para indicar o contexto e o --path para a subpasta
+  # Passo 1: Build da imagem usando a subpasta correta
   - name: 'gcr.io/k8s-skaffold/pack'
     args:
       - 'build'
-      - 'gcr.io/$PROJECT_ID/sample-python:$SHORT_SHA'
+      - 'gcr.io/$PROJECT_ID/function-file-transfer:$SHORT_SHA'
       - '--builder'
       - 'gcr.io/buildpacks/builder'
       - '--path'
-      - 'functions/file_transfer' # <--- O caminho para onde está o seu código
+      - 'functions/file_transfer'
 
-  # Passo 2: Push da imagem para o Registry (GCR)
+  # Passo 2: Push da imagem para o Artifact Registry/GCR
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/sample-python:$SHORT_SHA']
+    args: ['push', 'gcr.io/$PROJECT_ID/function-file-transfer:$SHORT_SHA']
 
-  # Passo 3: Deploy no Cloud Run (Atualizado)
+  # Passo 3: Deploy no Cloud Run (que sustenta a Cloud Function 2nd gen)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
       - 'run'
       - 'deploy'
-      - 'sample-python'
+      - 'function-file-transfer'
       - '--image'
-      - 'gcr.io/$PROJECT_ID/sample-python:$SHORT_SHA'
+      - 'gcr.io/$PROJECT_ID/function-file-transfer:$SHORT_SHA'
       - '--region'
       - 'europe-west1'
       - '--platform'
@@ -31,7 +31,7 @@ steps:
       - 'FLASK_APP=main.py'
 
 images:
-  - 'gcr.io/$PROJECT_ID/sample-python:$SHORT_SHA'
+  - 'gcr.io/$PROJECT_ID/function-file-transfer:$SHORT_SHA'
 
 options:
   logging: CLOUD_LOGGING_ONLY
