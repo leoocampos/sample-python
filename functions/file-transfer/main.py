@@ -5,7 +5,6 @@ from google.auth import default
 import tempfile
 import os
 
-# =====================
 # CONFIGURAÇÕES
 # =====================
 FOLDER_ORIGEM = "12hs-FDKNkljlRuN8jslq9yaTHRUca_b4"
