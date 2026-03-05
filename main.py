@@ -42,30 +42,25 @@ def listar_arquivos_pasta(drive_service, folder_id):
 
 def mover_para_bucket(drive_service, bucket, file_id, file_name):
     temp_path = os.path.join(tempfile.gettempdir(), file_name)
-
     try:
-        # 1️⃣ Baixa do Drive
+        # 1️⃣ Download
         request = drive_service.files().get_media(fileId=file_id)
         with open(temp_path, "wb") as f:
             f.write(request.execute())
 
-        # 2️⃣ Upload para o Cloud Storage
+        # 2️⃣ Upload (Sobrescreve se já existir)
         bucket.blob(file_name).upload_from_filename(temp_path)
 
-        # 3️⃣ Remove do Drive (MOVE real)
-        drive_service.files().update(fileId=file_id, body={'trashed': True}).execute()
-
-        logging.info(f"Arquivo enviado ao Bucket: {file_name}")
-
+        # 3️⃣ Lixeira (Método mais robusto)
+        drive_service.files().trash(fileId=file_id).execute()
+        
+        return True # Retorna sucesso para o contador
     except Exception as e:
-        logging.error(f"Erro ao processar arquivo {file_name}. O original permanece no Drive: {e}")
-        raise
-
+        logging.error(f"Erro ao processar {file_name}: {e}")
+        return False
     finally:
-        # Garante limpeza do arquivo temporário
         if os.path.exists(temp_path):
             os.remove(temp_path)
-
 
 def processar_arquivos():
     try:
@@ -91,11 +86,13 @@ def processar_arquivos():
                     arq["name"]
                 )
                 arquivos_processados += 1
+                logging.info(f"Sucesso total: {arq['name']} processado e enviado à lixeira")
             except Exception as erro_individual:
                 logging.error(f"Falha ao processar {arq['name']}: {erro_individual}")
+        final_status = "success" if arquivos_processados > 0 else "ok"
 
         return {
-            "status": "success",
+            "status": final_status,
             "processed_files": arquivos_processados
         }, 200
 
