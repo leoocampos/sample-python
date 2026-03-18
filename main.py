@@ -54,29 +54,33 @@ def processar_arquivos():
         drive_service, bucket = get_clients()
         arquivos = listar_arquivos_pasta(drive_service, FOLDER_ORIGEM)
 
-        # 🚀 CORREÇÃO 2: Caso a pasta esteja vazia
-        if not arquivos:
-            logging.info("A pasta do Google Drive está vazia.")
+        # 🚀 MUDANÇA AQUI: Se não houver arquivos, retornamos ERRO (404)
+        if not arquivos or len(arquivos) == 0:
+            logging.warning("Pasta vazia. Disparando erro para o Workflow.")
             return {
-                "status": "no_files", # Mudamos de 'success' para 'no_files'
-                "message": "A pasta de origem não contém arquivos para processar.",
-                "processed_files": 0
-            }, 200
-
+                "status": "no_files_error",
+                "message": "A pasta de origem esta vazia. O pipeline nao pode continuar."
+            }, 404
         arquivos_copiados = 0
         for arq in arquivos:
             sucesso = mover_para_bucket(drive_service, bucket, arq["id"], arq["name"])
             if sucesso:
                 arquivos_copiados += 1
+        # Caso tenha arquivos mas nenhum foi copiado com sucesso
+        if arquivos_copiados == 0:
+            return {
+                "status": "transfer_failure",
+                "message": "Arquivos encontrados, mas falha no download/upload."
+            }, 500
 
-        # Retorno final baseado na execução
+        # SUCESSO REAL (Apenas aqui retorna 200)
         return {
             "status": "success",
             "processed_files": arquivos_copiados
         }, 200
 
     except Exception as e:
-        logging.error(f"Erro geral: {e}")
+        logging.error(f"Erro critico: {e}")
         return {"status": "error", "message": str(e)}, 500
 
 @app.post("/file_transfer")
